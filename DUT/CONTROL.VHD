@@ -26,7 +26,7 @@ END control;
 
 ARCHITECTURE behavior OF control IS
 
-	SIGNAL  rtype_w, lw_w, sw_w, beq_w, itype_imm_w : STD_LOGIC;
+	SIGNAL  rtype_w, lw_w, sw_w, beq_w, bnq_w itype_imm_w : STD_LOGIC;
 
 BEGIN           
 				-- Code to generate control signals using opcode bits
@@ -34,6 +34,7 @@ BEGIN
 	lw_w          		<=  '1'	WHEN  	opcode_i = LW_OPC  			ELSE '0';
  	sw_w          		<=  '1'	WHEN  	opcode_i = SW_OPC  			ELSE '0';
    	beq_w         		<=  '1'	WHEN  	opcode_i = BEQ_OPC  		ELSE '0';
+	bnq_w         		<=  '1'	WHEN  	opcode_i = BNQ_OPC  		ELSE '0';
 	itype_imm_w			<=	'1'	WHEN	((opcode_i = ADDI_OPC) or 
 										( opcode_i = ORI_OPC)  or 
 										( opcode_i = ANDI_OPC))		ELSE '0';  							
@@ -44,9 +45,9 @@ BEGIN
   	RegWrite_ctrl_o 	<=  rtype_w OR lw_w or itype_imm_w;
   	MemRead_ctrl_o 		<=  lw_w;
    	MemWrite_ctrl_o 	<=  sw_w; 
- 	Branch_ctrl_o      	<=  beq_w;
+ 	Branch_ctrl_o      	<=  beq_w or bnq_w;
 	
-	ALUOp_ctrl_o(0) 	<=  beq_w;
+	ALUOp_ctrl_o(0) 	<=  beq_w or bnq_w;
 	ALUOp_ctrl_o(1) 	<=  rtype_w;
 
    END behavior;

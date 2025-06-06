@@ -8,7 +8,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_SIGNED.ALL;
-
+--use IEEE.numeric_std.all;
 
 ENTITY  Execute IS
 	generic(
@@ -70,10 +70,11 @@ PROCESS (alu_ctl_w, a_input_w, b_input_w)
      	WHEN "001" 	=>	alu_out_mux_w 	<= a_input_w OR b_input_w;
 						-- ALU performs ALUresult = A_input + B_input
 	 	WHEN "010" 	=>	alu_out_mux_w 	<= a_input_w + b_input_w;
-						-- ALU performs ?
- 	 	WHEN "011" 	=>	alu_out_mux_w <= X"00000000";
-						-- ALU performs ?
- 	 	WHEN "100" 	=>	alu_out_mux_w 	<= X"00000000";
+						-- ALU performs ALUresult = A_input * B_input
+ 	 	WHEN "011" 	=>	alu_out_mux_w <= product := a_input_w * b_input_w; -- result 64 bit
+							ALU_output_mux <= product(31 DOWNTO 0); -- Take Lower Part
+						-- ALU performs ALUresult = A_input XOR B_input
+ 	 	WHEN "100" 	=>	alu_out_mux_w 	<= a_input_w xor b_input_w;
 						-- ALU performs ?
  	 	WHEN "101" 	=>	alu_out_mux_w 	<= X"00000000";
 						-- ALU performs ALUresult = A_input -B_input

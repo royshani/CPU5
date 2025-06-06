@@ -83,6 +83,7 @@ BEGIN
 	------------------------------------------------------------------------------------				
 	next_pc_w  <= 	(others => '0') WHEN rst_flag_q = '1' ELSE
 					add_result_i  WHEN ((Branch_ctrl_i = '1') AND (zero_i = '1')) ELSE
+					
 					pc_plus4_r(PC_WIDTH-1 DOWNTO 2);				
 	-------------------------------------------------------------------------------------
 	process (clk_i)
