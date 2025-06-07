@@ -12,7 +12,7 @@ LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
 
 
-ENTITY Ifetch IS
+ENTITY IfetchH IS
 	generic(
 		WORD_GRANULARITY : boolean 	:= False;
 		DATA_BUS_WIDTH : integer 	:= 32;
@@ -32,7 +32,7 @@ ENTITY Ifetch IS
 		instruction_o 	: OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 		inst_cnt_o 		: OUT	STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0)	
 	);
-END Ifetch;
+END IfetchH;
 
 
 ARCHITECTURE behavior OF Ifetch IS
@@ -55,7 +55,7 @@ BEGIN
 		lpm_hint => "ENABLE_RUNTIME_MOD = YES,INSTANCE_NAME = ITCM",
 		lpm_type => "altsyncram",
 		outdata_reg_a => "UNREGISTERED",
-		init_file => "C:\TestPrograms\Quartus21_1\binary\ITCM.hex",
+		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\VHDL\CODE\program.hex",
 		intended_device_family => "Cyclone"
 	)
 	PORT MAP (
