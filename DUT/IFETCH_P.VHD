@@ -88,12 +88,19 @@ BEGIN
 	pc_plus4_r( 1 DOWNTO 0 )  		 <= "00";
     pc_plus4_r(PC_WIDTH-1 DOWNTO 2)  <= pc_q(PC_WIDTH-1 DOWNTO 2) + 1;
 
----------- Mux to select Branch Address or PC + 4 -----------       
+---------- Mux to select Branch Address or PC + 4 -----------   FIX SRC IN DECODE     
 	next_pc_w  <= (others => '0') 	WHEN rst_flag_q = '1' 	ELSE
 				add_result_i 			WHEN PCSrc = "01" 		ELSE   -- branch
 				JumpAddr			WHEN PCSrc = "10"		ELSE	-- jump
 				pc_plus4_r(PC_WIDTH-1 DOWNTO 2);
 			
+------------------ RESET process ----------------------------
+	process (clk_i)
+	BEGIN
+		IF(clk_i'EVENT  AND clk_i='1') THEN
+			rst_flag_q <= rst_i;
+		end if;
+	end process;			
 ---------- PC Proccess (CLK on rising edge) --------------			
 	PROCESS  BEGIN
 		WAIT UNTIL ( clock'EVENT ) AND ( clk_i = '1' );
@@ -103,6 +110,37 @@ BEGIN
 			   pc_q( 9 DOWNTO 2 ) <= next_pc_w;
 		END IF;
 	END PROCESS;
+
+---------------------------------------------------------------------------------------
+--						IPC - instruction counter register
+---------------------------------------------------------------------------------------
+
+-------------------------- previuos pc update -----------------------------------------
+process (clk_i , rst_i)
+begin
+	if rst_i = '1' then
+		pc_prev_q	<=	(others	=> '0');
+	elsif falling_edge(clk_i) then
+		pc_prev_q	<=	pc_q;
+	end if;
+end process;
+-------------------------- instruction counter update ----------------------------------
+
+process (clk_i , rst_i)
+begin
+	if rst_i = '1' then
+		inst_cnt_q	<=	(others	=> '0');
+	elsif rising_edge(clk_i) then
+		if pc_prev_q = pc_q then
+			inst_cnt_q	<=	inst_cnt_q + '1';
+		end if;
+	end if;
+end process;
+
+----------------- copy output signals - allows read inside module -----------------------
+	pc_o 				<= 	pc_q;
+	pc_plus4_o 			<= 	pc_plus4_r;
+	inst_cnt_o			<=	inst_cnt_q;
 END behaviour;
 
 
