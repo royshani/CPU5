@@ -147,6 +147,9 @@ BEGIN
 
 	EXE:  Execute
    	generic map(
+		opcode_i 			=> instruction_w(DATA_BUS_WIDTH-1 DOWNTO 26),
+		rst_i				=>	rst_i,
+		clk_i				=> 	clk_i,
 		DATA_BUS_WIDTH 		=> 	DATA_BUS_WIDTH,
 		FUNCT_WIDTH 		=>	FUNCT_WIDTH,
 		PC_WIDTH 			=>	PC_WIDTH
