@@ -99,6 +99,7 @@ package aux_package is
 			instruction_i 	: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			dtcm_data_rd_i 	: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			alu_result_i	: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+			write_data_i	: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			RegWrite_ctrl_i : IN 	STD_LOGIC;
 			MemtoReg_ctrl_i : IN 	STD_LOGIC;
 			RegDst_ctrl_i 	: IN 	STD_LOGIC;

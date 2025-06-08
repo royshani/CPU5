@@ -126,6 +126,7 @@ BEGIN
 			alu_result_i 		=> alu_result_w,
 			RegWrite_ctrl_i 	=> reg_write_w,
 			MemtoReg_ctrl_i 	=> MemtoReg_w,
+			write_data_i		=> write_data_o
 			RegDst_ctrl_i 		=> reg_dst_w,
 			read_data1_o 		=> read_data1_w,
         	read_data2_o 		=> read_data2_w,
