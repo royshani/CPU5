@@ -140,8 +140,7 @@ BEGIN
 ------------ ALU Proces -----------------------------
 
 ------------ ALU Proces -----------------------------
-PROCESS ( alu_ctl_w, a_input_w, b_input_w )
-	variable product : STD_LOGIC_VECTOR(63 downto 0); 
+PROCESS ( alu_ctl_w, a_input_w, b_input_w ) 
 	BEGIN
 	--------------- Select ALU operation ---------------------
  	CASE alu_ctl_w IS
@@ -151,9 +150,8 @@ PROCESS ( alu_ctl_w, a_input_w, b_input_w )
      	WHEN "0001" 	=>	ALU_out_mux_w 	<= a_input_w OR b_input_w;
 		-- ALU performs ALUresult = A_input + B_input
 	 	WHEN "0010" 	=>	ALU_out_mux_w 	<= a_input_w + b_input_w; 
-		-- ALU performs ALUresult = A_input * B_input
- 	 	WHEN "0011" 	=>	product := a_input_w * b_input_w; -- result 64 bit
-							ALU_out_mux_w <= product(31 DOWNTO 0); -- Take Lower Part
+		-- ALU performs ALUresult = A_input(15 DOWNTO 0) * B_input(15 DOWNTO 0)
+ 	 	WHEN "0011" 	=>	ALU_out_mux_w <= a_input_w(15 DOWNTO 0) * b_input_w(15 DOWNTO 0); -- result 32 bit
 		-- ALU performs ALUresult = A_input XOR B_input
  	 	WHEN "0100" 	=>	ALU_out_mux_w 	<= a_input_w XOR b_input_w;
 		-- ALU performs ALUresult = A_input SLL B_input
