@@ -4,6 +4,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_SIGNED.ALL;
 USE work.aux_package.ALL;
+use work.cond_comilation_package.all;
 -------------- ENTITY --------------------
 ENTITY MIPS IS
 	GENERIC ( 			WORD_GRANULARITY : boolean 	:= G_WORD_GRANULARITY;
@@ -33,7 +34,7 @@ ENTITY MIPS IS
 		inst_cnt_o 			:OUT	STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0);
 		STCNT_o 								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		FHCNT_o								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		BPADDR_i							: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 )
+		BPADDR_i							: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		ST_trigger							: OUT  STD_LOGIC
 		);
 END 	MIPS;
@@ -45,8 +46,6 @@ ARCHITECTURE structure OF MIPS IS
 
 	-- declare signals used to connect VHDL components
 	SIGNAL PC_plus_4 		: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-	SIGNAL read_data1_o 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL read_data2_o 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Sign_Extend 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Add_Result 		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 	SIGNAL ALU_Result 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
@@ -61,9 +60,6 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL ALUop 			: STD_LOGIC_VECTOR(  1 DOWNTO 0 );
 	SIGNAL instruction_i		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 -------------- Signals To support CPI/IPC calculation and break point debug ability --------------------------------
-	--SIGNAL CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
-	--SIGNAL STCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-	--SIGNAL FHCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 	SIGNAL BPADD_ena		: STD_LOGIC;
 	SIGNAL Run				: STD_LOGIC;
 	SIGNAL PC_BPADD			: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
@@ -80,7 +76,6 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL Branch_MEM, Branch_EX, Branch_ID 		: STD_LOGIC;
 	SIGNAL MemWrite_MEM, MemWrite_EX, MemWrite_ID 	: STD_LOGIC;
 	SIGNAL MemRead_MEM, MemRead_EX, MemRead_ID 		: STD_LOGIC;
-	--SIGNAL PCSrc_MEM								: STD_LOGIC_VECTOR(1 DOWNTO 0);
 	SIGNAL BranchBeq_MEM, BranchBeq_EX, BranchBeq_ID: STD_LOGIC;
 	SIGNAL BranchBne_MEM, BranchBne_EX, BranchBne_ID: STD_LOGIC;
 	SIGNAL Jump_MEM, Jump_EX, Jump_ID				: STD_LOGIC;
@@ -145,19 +140,22 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL write_data_mux_WB									: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	------------------------------------------------------
 
+	SIGNAL MCLK_w : STD_LOGIC;
+	SIGNAL inst_cnt_w : STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0);
+
 BEGIN
 	-------------------------- FPGA or ModelSim -----------------------
-	resetSim 	<= reset WHEN SIM ELSE not reset;
+	resetSim 	<= rst_i WHEN SIM ELSE not rst_i;
 	enaSim		<= ena 	 WHEN SIM ELSE not ena;
 	
 	instruction_top_o 	<= 	IR_IF;
    alu_result_o 		<= 	ALU_Result_EX;
    read_data1_o 		<= 	read_data_1_ID;
    read_data2_o 		<= 	read_data_2_ID;
-   write_data_o  		<= 	write_data_mux_WB WHEN MemtoReg_w = '1' ELSE 
+   write_data_o  		<= 	write_data_mux_WB WHEN MemtoReg_WB = '1' ELSE 
 							ALU_Result_EX;
 							
-   Branch_ctrl_o 		<= 	BranchBeq or BranchBne;
+   Branch_ctrl_o 		<= 	BranchBeq_ID or BranchBne_ID;
    Zero_o 				<= 	Zero_EX;
    RegWrite_ctrl_o 		<= 	RegWrite_ID;
    MemWrite_ctrl_o 		<= 	MemWrite_ID;
@@ -177,50 +175,50 @@ BEGIN
    --------------------- PORT MAP COMPONENTS --------------------------
    ----- Instruction Fetch -----
 	IFE : Ifetch
-	GENERIC MAP(SIM => SIM) 
-	PORT MAP (	
+	PORT MAP (
 		clk_i 			=> MCLK_w,  -- B
 		rst_i 			=> rst_i, -- B
 		add_result_i 	=> PCBranch_addr_ID, -- B
-		--Branch_ctrl_i 	=> branch_w,
-		--zero_i 			=> zero_w, --H
 		Stall_IF	    => Stall_IF,
 		pc_o 			=> PC_BPADD, -- B
 		instruction_o 	=> IR_IF, -- B
-    	pc_plus4_o	 	=> PC_plus_4_IF, -- B
+    	pc_plus_4_o	 	=> PC_plus_4_IF, -- B
 		inst_cnt_o		=> inst_cnt_w, --H
 		PCSrc			=> PCSrc_ID, -- G
 		ena 		    => enaSim, -- G
 		JumpAddr		=> JumpAddr_ID, -- G
 		BPADD_ena		=> BPADD_ena -- G
-
 	);
 	----- Instruction Decode -----
 	ID : Idecode
-   	PORT MAP (	--write_data_EX,
-				read_data1_o 	=> read_data_1_ID,
-        		read_data2_o 	=> read_data_2_ID,
-				rd_register_o => Wr_reg_addr_0_ID,
-				rt_register_o => Wr_reg_addr_1_ID,
+   	PORT MAP (
+				read_data1_o    => read_data_1_ID,
+        		read_data2_o    => read_data_2_ID,
+				rd_register_o   => Wr_reg_addr_0_ID,
+				rt_register_o   => Wr_reg_addr_1_ID,
 				write_register_address   => Wr_reg_addr_WB,
-        		instruction_i 	=> IR_ID,
+        		instruction_i   => IR_ID,
 				PC_plus_4_shifted => PC_plus_4_ID(9 DOWNTO 2),
-				RegWrite_ctrl_i 		=> RegWrite_WB,
-				ForwardA_ID		=> ForwardA_ID,
-				ForwardB_ID		=> ForwardB_ID,
-				BranchBeq		=> BranchBeq_ID,
-				BranchBne		=> BranchBne_ID,
-				Jump			=> Jump_ID,
-				JAL				=> Jal_ID,
-				Stall_ID	    => Stall_ID,
-				write_data_i		=> write_data_mux_WB,  
+				RegWrite_ctrl_i     => RegWrite_WB,
+				ForwardA_ID     => ForwardA_ID,
+				ForwardB_ID     => ForwardB_ID,
+				BranchBeq       => BranchBeq_ID,
+				BranchBne       => BranchBne_ID,
+				Jump            => Jump_ID,
+				JAL             => Jal_ID,
+				Stall_ID        => Stall_ID,
+				write_data_i    => write_data_mux_WB,  
 				Branch_read_data_FW => ALU_Result_MEM, --Branch forwarding
-				sign_extend_o 	=> Sign_extend_ID,
-				PCSrc			=> PCSrc_ID,
-				JumpAddr		=> JumpAddr_ID,
-				PCBranch_addr	=> PCBranch_addr_ID,
-        		clk_i 			=> MCLK_w,  
-				rst_i 			=> rst_i );
+				sign_extend_o   => Sign_extend_ID,
+				PCSrc           => PCSrc_ID,
+				JumpAddr        => JumpAddr_ID,
+				PCBranch_addr   => PCBranch_addr_ID,
+        		clk_i           => MCLK_w,  
+				rst_i           => rst_i,
+				dtcm_data_rd_i  => (others => '0'),
+				alu_result_i    => (others => '0'),
+				MemtoReg_ctrl_i => '0'
+	);
 	
 			
 	----- Control Unit in Instruction Decode -----
@@ -307,11 +305,11 @@ BEGIN
 	
 	---------------------------------------------------------------------------
 	------- PROCESS TO COUNT Clocks, Stalls, Flushs --------
-	PC		 	<= PC_BPADD;
-	BPADD_ena 	<= '1' WHEN (NOT SIM AND BPADD = PC_BPADD(9 DOWNTO 2) AND BPADDR_i /= X"00") ELSE '0';
+	pc_o		 	<= PC_BPADD;
+	BPADD_ena 	<= '1' WHEN (NOT SIM AND BPADDR_i = PC_BPADD(9 DOWNTO 2) AND BPADDR_i /= X"00") ELSE '0';
 	ST_trigger 	<= BPADD_ena;
 	
-	PROCESS (clock, resetSim, enaSim, Run, BPADD_ena, Flush_EX, Stall_ID, Stall_IF) 
+	PROCESS (clk_i, resetSim, enaSim, Run, BPADD_ena, Flush_EX, Stall_ID, Stall_IF) 
 		VARIABLE CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
 		VARIABLE STCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		VARIABLE FHCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
@@ -321,7 +319,7 @@ BEGIN
 			STCNT_sig 	:= X"00";
 			FHCNT_sig 	:= X"00";
 			Run			<= '0';
-		ELSIF (rising_edge(clock) and Run = '1' and BPADD_ena = '0') THEN 	-- count clk counts on rising edge
+		ELSIF (rising_edge(clk_i) and Run = '1' and BPADD_ena = '0') THEN 	-- count clk counts on rising edge
 			CLKCNT_sig := CLKCNT_sig + 1;
 			IF (Stall_ID OR Stall_IF) = '1' THEN 	-- count on rising edge when stall occurs
 				STCNT_sig := STCNT_sig + 1;
@@ -347,7 +345,7 @@ BEGIN
 
 	----------------------- Connect Pipeline Registers ------------------------
 	PROCESS BEGIN
-		WAIT UNTIL clock'EVENT AND clock = '1';
+		WAIT UNTIL clk_i'EVENT AND clk_i = '1';
 		IF  (Run = '1' AND BPADD_ena = '0') THEN
 			-------------- Instruction Fetch TO Instruction Decode ---------------- 
 			IF Stall_ID = '0' THEN 
