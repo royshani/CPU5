@@ -71,8 +71,10 @@ BEGIN
 		pc_q(1 DOWNTO 0) <= "00";
 
 --------- Copy output signals - allows read inside module -----------
-		PC_out 			<= pc_q;
-		PC_plus_4_out 	<= pc_plus4_r;
+        --PC_out          <= pc_q;
+        --PC_plus_4_out   <= pc_plus4_r;
+        pc_o             <= pc_q;
+        pc_plus_4_o      <= pc_plus4_r;
 
 ---------- Send address to inst. memory address register ---------
 
@@ -103,8 +105,8 @@ BEGIN
 	end process;			
 ---------- PC Proccess (CLK on rising edge) --------------			
 	PROCESS  BEGIN
-		WAIT UNTIL ( clock'EVENT ) AND ( clk_i = '1' );
-		IF reset = '1' THEN
+		WAIT UNTIL ( clk_i'EVENT ) AND ( clk_i = '1' );
+		IF rst_i = '1' THEN
 			   pc_q( 9 DOWNTO 2) <= "00000000" ; 
 		ELSIF (ena = '1' AND Stall_IF = '0' AND BPADD_ena = '0') THEN
 			   pc_q( 9 DOWNTO 2 ) <= next_pc_w;
@@ -138,9 +140,9 @@ begin
 end process;
 
 ----------------- copy output signals - allows read inside module -----------------------
-	pc_o 				<= 	pc_q;
-	pc_plus4_o 			<= 	pc_plus4_r;
-	inst_cnt_o			<=	inst_cnt_q;
+	pc_o               <=  pc_q;
+	pc_plus_4_o        <=  pc_plus4_r;
+	inst_cnt_o         <=  inst_cnt_q;
 END behaviour;
 
 

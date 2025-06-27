@@ -54,7 +54,7 @@ BEGIN
 	rs_register_w	<= instruction_i( 25 DOWNTO 21 ); -- both
    	rt_register_o 	<= instruction_i( 20 DOWNTO 16 ); -- both
    	rd_register_o	<= instruction_i( 15 DOWNTO 11 ); -- both
-   	--rt_regster_w 	<= instruction_i( 20 DOWNTO 16 );
+   	rt_register_w <= instruction_i(20 DOWNTO 16);
    	imm_value_w <= instruction_i( 15 DOWNTO 0 );
 	
 	-------------- Read Register 1 Operation - Rtype ---------------------------
@@ -63,7 +63,7 @@ BEGIN
 	read_data1_o 			<= read_data_1_sig;
 	-------------- Read Register 2 Operation - Rtype ---------------------------		 
 	read_data_comp_input_2 <= read_data_2_sig WHEN ForwardB_ID = '0' ELSE Branch_read_data_FW;
-	read_data_2_sig <= RF_q(CONV_INTEGER(read_register_2_address)); -- consider in 1 line
+	read_data_2_sig <= RF_q(CONV_INTEGER(rt_register_w)); -- consider in 1 line
 	read_data2_o 	<= read_data_2_sig;
 	-------------- PCSrc from Read Register Comp -----------------------
 	PCSrc(1) 		<= Jump;
@@ -85,7 +85,6 @@ BEGIN
 	write_reg_addr_w <= "11111" WHEN Jal = '1' ELSE write_register_address;
 
 	----------- Register File Process ---------------				
-	END PROCESS;
 	process(clk_i,rst_i)
 	begin
 		if (rst_i='1') then
@@ -98,7 +97,7 @@ BEGIN
 				-- index is integer type so we must use conv_integer for type casting
 			end if;
 		end if;
-end process;
+	end process;
 END behavior;
 
 

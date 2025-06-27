@@ -15,14 +15,14 @@ package aux_package is
         generic(
             WORD_GRANULARITY : boolean := G_WORD_GRANULARITY;
             MODELSIM         : integer := G_MODELSIM;
-            DATA_BUS_WIDTH   : integer := G_DATA_BUS_WIDTH;
+            DATA_BUS_WIDTH   : integer := 32;
             ITCM_ADDR_WIDTH  : integer := G_ADDRWIDTH;
             DTCM_ADDR_WIDTH  : integer := G_ADDRWIDTH;
             PC_WIDTH         : integer := 10;
             FUNCT_WIDTH      : integer := 6;
             DATA_WORDS_NUM   : integer := G_DATA_WORDS_NUM;
-            CLK_CNT_WIDTH    : integer := G_CLK_CNT_WIDTH;
-            INST_CNT_WIDTH   : integer := G_INST_CNT_WIDTH;
+            CLK_CNT_WIDTH    : integer := 16;
+            INST_CNT_WIDTH   : integer := 16;
             SIM              : boolean := false
         );
         port(
