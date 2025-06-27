@@ -28,8 +28,8 @@ ENTITY Idecode IS
 
 			read_data1_o						: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 ); --both
 			read_data2_o						: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 ); --both
-			write_register_address_0 		: OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-			rd_register_w 				: OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 ); -- SIGNAL AT H
+			rt_register_o 		: OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 );
+			rd_register_o 				: OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 ); -- SIGNAL AT H
 			sign_extend_o 					: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 ); --both
 			PCSrc		 					: OUT 	STD_LOGIC_VECTOR(1 DOWNTO 0); -- G
 			JumpAddr						: OUT   STD_LOGIC_VECTOR( 7 DOWNTO 0 ); 
@@ -47,13 +47,14 @@ TYPE register_file IS ARRAY ( 0 TO 31 ) OF STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL read_data_comp_input_1, read_data_comp_input_2	: STD_LOGIC_VECTOR(31 DOWNTO 0); -- G meant for branch prediction
 	SIGNAL Opcode							: STD_LOGIC_VECTOR(5 DOWNTO 0); -- G
 	SIGNAL Sign_extend_sig 					: STD_LOGIC_VECTOR( 31 DOWNTO 0 ); -- G
-	SIGNAL write_reg_data_w			    : STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+	SIGNAL write_reg_data_w			    : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL write_reg_addr_w : STD_LOGIC_VECTOR(4 DOWNTO 0);
 BEGIN
 	Opcode			<= instruction_i(31 DOWNTO 26 );
-	rs_register_w 	<= instruction_i( 25 DOWNTO 21 ); -- both
-   	rt_register_w 	<= instruction_i( 20 DOWNTO 16 ); -- both
-   	rd_register_w	<= instruction_i( 15 DOWNTO 11 ); -- both
-   	write_register_address_0 	<= instruction_i( 20 DOWNTO 16 );
+	rs_register_w	<= instruction_i( 25 DOWNTO 21 ); -- both
+   	rt_register_o 	<= instruction_i( 20 DOWNTO 16 ); -- both
+   	rd_register_o	<= instruction_i( 15 DOWNTO 11 ); -- both
+   	--rt_regster_w 	<= instruction_i( 20 DOWNTO 16 );
    	imm_value_w <= instruction_i( 15 DOWNTO 0 );
 	
 	-------------- Read Register 1 Operation - Rtype ---------------------------
@@ -81,6 +82,8 @@ BEGIN
 	
 	-------------  JAL Write Data Mux ---------------------- Added NEW 14:15
 	write_reg_data_w 	<= "000000000000000000000000" & PC_plus_4_shifted WHEN Jal = '1' ELSE write_data_i;	--JAL needs to be figures out	
+	write_reg_addr_w <= "11111" WHEN Jal = '1' ELSE write_register_address;
+
 	----------- Register File Process ---------------				
 	END PROCESS;
 	process(clk_i,rst_i)

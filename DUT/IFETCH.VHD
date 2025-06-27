@@ -23,8 +23,8 @@ ENTITY Ifetch IS
 	);
 	PORT(	clk_i, rst_i 						: IN 	STD_LOGIC;	
 			add_result_i 						: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0);
-			Branch_ctrl_i 						: IN 	STD_LOGIC;
-        	zero_i 								: IN 	STD_LOGIC;
+			--Branch_ctrl_i 						: IN 	STD_LOGIC;
+        	--zero_i 								: IN 	STD_LOGIC;
 			instruction_o 						: OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
         	pc_plus_4_o							: OUT	STD_LOGIC_VECTOR( PC_WIDTH-1 DOWNTO 0 );
 			inst_cnt_o					 		: OUT	STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0); -- HANAN	

@@ -156,10 +156,8 @@ PROCESS ( alu_ctl_w, a_input_w, b_input_w )
  	 	WHEN "0100" 	=>	ALU_out_mux_w 	<= a_input_w XOR b_input_w;
 		-- ALU performs ALUresult = A_input SLL B_input
  	 	WHEN "0101" 	=>	ALU_out_mux_w 	<=	std_logic_vector(shift_left(unsigned(a_input_w),to_integer(unsigned(b_input_w(10 downto 6)))));
-
 		-- ALU performs ALUresult = A_input SRL B_input
  	 	WHEN "1000" 	=>	ALU_out_mux_w 	<=	std_logic_vector(shift_right(unsigned(a_input_w),to_integer(unsigned(b_input_w(10 downto 6))))); 
-
 		-- ALU performs ALUresult = A_input -B_input
  	 	WHEN "0110" 	=>	ALU_out_mux_w 	<= a_input_w - b_input_w; 
 		-- ALU performs SLT
