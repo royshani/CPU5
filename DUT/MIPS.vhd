@@ -61,7 +61,6 @@ ARCHITECTURE structure OF MIPS IS
 -------------- Signals To support CPI/IPC calculation and break point debug ability --------------------------------
 	SIGNAL BPADD_ena		: STD_LOGIC;
 	SIGNAL Run				: STD_LOGIC;
-	SIGNAL PC_BPADD			: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
 	---------------- Pipeline Registers --------------------------
 	
 	------ Control Registers ------
@@ -179,7 +178,7 @@ BEGIN
 		rst_i 			=> rst_i, -- B
 		add_result_i 	=> PCBranch_addr_ID, -- B
 		Stall_IF	    => Stall_IF,
-		pc_o 			=> PC_BPADD, -- B
+		pc_o 			=> pc_o, -- B - Direct connection to output
 		instruction_o 	=> IR_IF, -- B
     	pc_plus_4_o	 	=> PC_plus_4_IF, -- B
 		inst_cnt_o		=> inst_cnt_w, --H
@@ -304,9 +303,11 @@ BEGIN
 	
 	---------------------------------------------------------------------------
 	------- PROCESS TO COUNT Clocks, Stalls, Flushs --------
-	pc_o		 	<= PC_BPADD;
-	BPADD_ena 	<= '1' WHEN (NOT SIM AND BPADDR_i = PC_BPADD(9 DOWNTO 2) AND BPADDR_i /= X"00") ELSE '0';
+	BPADD_ena 	<= '1' WHEN (NOT SIM AND BPADDR_i = pc_o(9 DOWNTO 2) AND BPADDR_i /= X"00") ELSE '0';
 	ST_trigger 	<= BPADD_ena;
+	
+	-- Ensure Run is set when enabled and not in reset
+	Run <= '1' WHEN (enaSim = '1' AND resetSim = '0' AND BPADD_ena = '0') ELSE '0';
 	
 	PROCESS (clk_i, resetSim, enaSim, Run, BPADD_ena, Flush_EX, Stall_ID, Stall_IF) 
 		VARIABLE CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
@@ -317,7 +318,6 @@ BEGIN
 			CLKCNT_sig  := X"0000";
 			STCNT_sig 	:= X"00";
 			FHCNT_sig 	:= X"00";
-			Run			<= '0';
 		ELSIF (rising_edge(clk_i) and Run = '1' and BPADD_ena = '0') THEN 	-- count clk counts on rising edge
 			CLKCNT_sig := CLKCNT_sig + 1;
 			IF (Stall_ID OR Stall_IF) = '1' THEN 	-- count on rising edge when stall occurs
@@ -328,11 +328,6 @@ BEGIN
 			END IF;
 		END IF;
 		
-		IF BPADD_ena = '1' THEN -- if PC got to BreakPointAddr then pause
-			Run			<= '0';
-		ELSIF enaSim = '1' THEN 
-			Run			<= '1';
-		END IF;
 		------------- Signals To support CPI/IPC calculation -------------
 		mclk_cnt_o 		<= CLKCNT_sig;
 		STCNT_o 		<= STCNT_sig;

@@ -82,20 +82,19 @@ BEGIN
 	-- send address to inst. memory address register
 	G1: 
 	if (WORD_GRANULARITY = True) generate 		-- i.e. each WORD has unike address
-		itcm_addr_w <= next_pc_w;
+		itcm_addr_w <= "00" & pc_q(PC_WIDTH-1 DOWNTO 2);
 	elsif (WORD_GRANULARITY = False) generate 	-- i.e. each BYTE has unike address
-		itcm_addr_w <= next_pc_w & "00";
+		itcm_addr_w <= "00" & pc_q(PC_WIDTH-1 DOWNTO 2) & "00";
 	end generate;
 		
 	-- Adder to increment PC by 4
-	pc_plus4_r( 1 DOWNTO 0 )  		 <= "00";
-    pc_plus4_r(PC_WIDTH-1 DOWNTO 2)  <= pc_q(PC_WIDTH-1 DOWNTO 2) + 1;
+	pc_plus4_r <= pc_q + 4; -- Simple addition instead of bit manipulation
 
 ---------- Mux to select Branch Address or PC + 4 -----------   FIX SRC IN DECODE     
 	next_pc_w  <= (others => '0') 	WHEN rst_flag_q = '1' 	ELSE
 				add_result_i 			WHEN PCSrc = "01" 		ELSE   -- branch
 				JumpAddr			WHEN PCSrc = "10"		ELSE	-- jump
-				"00" & pc_plus4_r(PC_WIDTH-1 DOWNTO 2);
+				pc_plus4_r; -- Use the already calculated PC+4 instead of recalculating
 			
 ------------------ RESET process ----------------------------
 	process (clk_i)
@@ -105,12 +104,13 @@ BEGIN
 		end if;
 	end process;			
 ---------- PC Proccess (CLK on rising edge) --------------			
-	PROCESS  BEGIN
-		WAIT UNTIL ( clk_i'EVENT ) AND ( clk_i = '1' );
+	PROCESS (clk_i, rst_i) BEGIN
 		IF rst_i = '1' THEN
 			   pc_q( PC_WIDTH-1 DOWNTO 2) <= (others => '0'); 
-		ELSIF (ena = '1' AND Stall_IF = '0' AND BPADD_ena = '0') THEN
+		ELSIF (clk_i'EVENT AND clk_i = '1') THEN
+			IF (ena = '1' AND Stall_IF = '0' AND BPADD_ena = '0') THEN
 			   pc_q( PC_WIDTH-1 DOWNTO 2 ) <= next_pc_w(PC_WIDTH-1 DOWNTO 2);
+			END IF;
 		END IF;
 	END PROCESS;
 

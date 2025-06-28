@@ -51,7 +51,7 @@ BEGIN
 
 	-- EXEC -- 
 	RegDst_ctrl_o(1)	<= jali_w; -- jal
-	RegDst_ctrl_o(0)  	<= rtype_w;
+	RegDst_ctrl_o(0)  	<= rtype_w OR lw_w OR addi_w OR andi_w OR ori_w OR xori_w OR lui_w OR slti_w;
 	ALUSrc_ctrl_o  	<= lw_w OR sw_w OR addi_w OR andi_w OR ori_w OR xori_w OR shift_w OR lui_w OR slti_w;
 	ALUOp_ctrl_o(0) 	<= beq_w OR bne_w OR shift_w; 
 	ALUOp_ctrl_o(1) 	<= rtype_w;

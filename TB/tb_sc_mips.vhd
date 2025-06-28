@@ -30,6 +30,7 @@ ARCHITECTURE struct OF MIPS_tb IS
    -- Internal signal declarations
    SIGNAL rst_tb_i           	: STD_LOGIC;
    SIGNAL clk_tb_i           	: STD_LOGIC;
+   SIGNAL ena_tb_i           	: STD_LOGIC;
    
    SIGNAL alu_result_tb_o  		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL Branch_ctrl_tb_o      : STD_LOGIC;
@@ -43,6 +44,10 @@ ARCHITECTURE struct OF MIPS_tb IS
    SIGNAL write_data_tb_o  		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL mclk_cnt_tb_o			: STD_LOGIC_VECTOR(CLK_CNT_WIDTH-1 DOWNTO 0);
    SIGNAL inst_cnt_tb_o 		: STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0);
+   SIGNAL STCNT_tb_o			: STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL FHCNT_tb_o			: STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL ST_trigger_tb_o		: STD_LOGIC;
+   SIGNAL BPADDR_tb_i		: STD_LOGIC_VECTOR(7 DOWNTO 0);
    
 BEGIN
 	CORE : MIPS
@@ -56,11 +61,13 @@ BEGIN
 		FUNCT_WIDTH					=> FUNCT_WIDTH,
 		DATA_WORDS_NUM				=> DATA_WORDS_NUM,
 		CLK_CNT_WIDTH				=> CLK_CNT_WIDTH,
-		INST_CNT_WIDTH				=> INST_CNT_WIDTH
+		INST_CNT_WIDTH				=> INST_CNT_WIDTH,
+		SIM						=> TRUE
 	)
 	PORT MAP (
 		rst_i           	=> rst_tb_i,
 		clk_i           	=> clk_tb_i,
+		ena				=> ena_tb_i,
 		pc_o              	=> pc_tb_o,
 		alu_result_o  		=> alu_result_tb_o,
 		read_data1_o 		=> read_data1_tb_o,
@@ -72,7 +79,11 @@ BEGIN
 		MemWrite_ctrl_o    	=> MemWrite_ctrl_tb_o,
 		RegWrite_ctrl_o    	=> RegWrite_ctrl_tb_o,
 		mclk_cnt_o		   	=> mclk_cnt_tb_o,
-		inst_cnt_o			=> inst_cnt_tb_o
+		inst_cnt_o			=> inst_cnt_tb_o,
+		STCNT_o			=> STCNT_tb_o,
+		FHCNT_o			=> FHCNT_tb_o,
+		BPADDR_i		=> BPADDR_tb_i,
+		ST_trigger		=> ST_trigger_tb_o
 	);	
 --------------------------------------------------------------------	
 	gen_clk : 
@@ -90,5 +101,11 @@ BEGIN
 		  rst_tb_i <='1','0' after 80 ns;
 		  wait;
     end process;
+
+	-- Enable signal - always enabled
+	ena_tb_i <= '1';
+	
+	-- Breakpoint address - no breakpoint
+	BPADDR_tb_i <= "00000000";
 --------------------------------------------------------------------		
 END struct;

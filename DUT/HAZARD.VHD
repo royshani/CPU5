@@ -25,12 +25,11 @@ BEGIN
 ----------- Stall and Flush -----------------------	
 	LwStall <= MemtoReg_EX = '1' AND ( RegRt_EX = RegRs_ID OR RegRt_EX = RegRt_ID );
 	BranchStall <= ((BranchBeq_ID = '1' OR BranchBne_ID = '1') AND EX_RegWr = '1' AND (WriteReg_EX = RegRs_ID OR WriteReg_EX = RegRt_ID)) OR (BranchBeq_ID = '1' AND MemtoReg_MEM = '1' AND (WriteReg_MEM = RegRs_ID OR WriteReg_MEM = RegRt_ID));
-	--BranchBneStall <= (BranchBne_ID = '1' AND EX_RegWr = '1' AND (WriteReg_EX /= RegRs_ID OR WriteReg_EX /= RegRt_ID)) OR (BranchBne_ID = '1' AND MemtoReg_MEM = '1' AND (WriteReg_MEM /= RegRs_ID OR WriteReg_MEM /= RegRt_ID));
 	
+	-- Re-enable hazard detection
 	Stall_IF <= '1' WHEN (LwStall OR BranchStall) ELSE '0';
 	Stall_ID <= '1' WHEN (LwStall OR BranchStall) ELSE '0';
-	--Flush_EX <= '1' WHEN (LwStall OR BranchStall OR Jump_ID = '1') ELSE '0';
-	Flush_EX <= '1' WHEN (LwStall OR BranchStall) ELSE '0';
+	Flush_EX <= '1' WHEN (LwStall OR BranchStall OR Jump_ID = '1') ELSE '0';
 
 ----------- Forwarding -----------------------	
     --------------------- Register Forwarding -----------------------
