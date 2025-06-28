@@ -10,19 +10,20 @@ USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
+USE work.cond_comilation_package.all;
 ---------------- ENTITY ------------------
 ENTITY Ifetch IS
 	generic(
-		WORD_GRANULARITY : boolean 	:= False;
+		WORD_GRANULARITY : boolean 	:= G_WORD_GRANULARITY;
 		DATA_BUS_WIDTH : integer 	:= 32;
 		PC_WIDTH : integer 			:= 10;
-		NEXT_PC_WIDTH : integer 	:= 8; -- NEXT_PC_WIDTH = PC_WIDTH-2
-		ITCM_ADDR_WIDTH : integer 	:= 8;
-		WORDS_NUM : integer 		:= 256;
+		NEXT_PC_WIDTH : integer 	:= G_ADDRWIDTH; -- NEXT_PC_WIDTH = ITCM_ADDR_WIDTH
+		ITCM_ADDR_WIDTH : integer 	:= G_ADDRWIDTH;
+		WORDS_NUM : integer 		:= G_DATA_WORDS_NUM;
 		INST_CNT_WIDTH : integer 	:= 16
 	);
 	PORT(	clk_i, rst_i 						: IN 	STD_LOGIC;	
-			add_result_i 						: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0);
+			add_result_i 						: IN 	STD_LOGIC_VECTOR(G_ADDRWIDTH-1 DOWNTO 0);
 			--Branch_ctrl_i 						: IN 	STD_LOGIC;
         	--zero_i 								: IN 	STD_LOGIC;
 			instruction_o 						: OUT	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
@@ -31,7 +32,7 @@ ENTITY Ifetch IS
 ----------------------------  G Ports -----------------------------------
         	PCSrc 								   : IN 	STD_LOGIC_VECTOR( 1 DOWNTO 0 );
       		pc_o 								   : OUT	STD_LOGIC_VECTOR( PC_WIDTH-1 DOWNTO 0 );
-			JumpAddr							   : IN	STD_LOGIC_VECTOR( 7 DOWNTO 0 );
+			JumpAddr							   : IN	STD_LOGIC_VECTOR( G_ADDRWIDTH-1 DOWNTO 0 );
         	 ena, Stall_IF, BPADD_ena : IN 	STD_LOGIC);
 -------------------------------------------------------------------------			 
 END Ifetch;
@@ -57,7 +58,7 @@ BEGIN
 		lpm_hint => "ENABLE_RUNTIME_MOD = YES,INSTANCE_NAME = ITCM",
 		lpm_type => "altsyncram",
 		outdata_reg_a => "UNREGISTERED",
-		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\VHDL\CODE\program.hex", 
+		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\CPU5\CODE\ITCM.hex", 
 		intended_device_family => "Cyclone"
 	)
 	PORT MAP (
@@ -94,7 +95,7 @@ BEGIN
 	next_pc_w  <= (others => '0') 	WHEN rst_flag_q = '1' 	ELSE
 				add_result_i 			WHEN PCSrc = "01" 		ELSE   -- branch
 				JumpAddr			WHEN PCSrc = "10"		ELSE	-- jump
-				pc_plus4_r(PC_WIDTH-1 DOWNTO 2);
+				"00" & pc_plus4_r(PC_WIDTH-1 DOWNTO 2);
 			
 ------------------ RESET process ----------------------------
 	process (clk_i)
@@ -107,9 +108,9 @@ BEGIN
 	PROCESS  BEGIN
 		WAIT UNTIL ( clk_i'EVENT ) AND ( clk_i = '1' );
 		IF rst_i = '1' THEN
-			   pc_q( 9 DOWNTO 2) <= "00000000" ; 
+			   pc_q( PC_WIDTH-1 DOWNTO 2) <= (others => '0'); 
 		ELSIF (ena = '1' AND Stall_IF = '0' AND BPADD_ena = '0') THEN
-			   pc_q( 9 DOWNTO 2 ) <= next_pc_w;
+			   pc_q( PC_WIDTH-1 DOWNTO 2 ) <= next_pc_w(PC_WIDTH-1 DOWNTO 2);
 		END IF;
 	END PROCESS;
 

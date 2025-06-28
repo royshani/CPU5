@@ -7,6 +7,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE work.cond_comilation_package.all;
 ----------------- ENTITY ----------------
 ENTITY Idecode IS
 	generic(
@@ -18,7 +19,7 @@ ENTITY Idecode IS
 			alu_result_i					: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0); -- NEED TO FIGURE OUT
 			RegWrite_ctrl_i 				: IN 	STD_LOGIC; --assigned to PCSRC
 			MemtoReg_ctrl_i 				: IN 	STD_LOGIC; --assigned to PCSRC
-			PC_plus_4_shifted				: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- G	
+			PC_plus_4_shifted				: IN 	STD_LOGIC_VECTOR(G_ADDRWIDTH-1 DOWNTO 0);	-- G	
 			ForwardA_ID, ForwardB_ID		: IN 	STD_LOGIC; -- G signals from Forward
 			BranchBeq, BranchBne, Jump, JAL	: IN 	STD_LOGIC; -- G signals for jump clasiffication
 			Stall_ID						: IN    STD_LOGIC; -- G for stall
@@ -32,8 +33,8 @@ ENTITY Idecode IS
 			rd_register_o 				: OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 ); -- SIGNAL AT H
 			sign_extend_o 					: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 ); --both
 			PCSrc		 					: OUT 	STD_LOGIC_VECTOR(1 DOWNTO 0); -- G
-			JumpAddr						: OUT   STD_LOGIC_VECTOR( 7 DOWNTO 0 ); 
-			PCBranch_addr 					: OUT 	STD_LOGIC_VECTOR(7 DOWNTO 0)
+			JumpAddr						: OUT   STD_LOGIC_VECTOR( G_ADDRWIDTH-1 DOWNTO 0 ); 
+			PCBranch_addr 					: OUT 	STD_LOGIC_VECTOR(G_ADDRWIDTH-1 DOWNTO 0)
 			);
 END Idecode;
 ------------ ARCHITECTURE ----------------
@@ -72,16 +73,19 @@ BEGIN
 					   BranchBne WHEN ((read_data_comp_input_1 /= read_data_comp_input_2) AND Stall_ID = '0') ELSE '0';  -- Branch Comperator (For bne chen inequality)
 	
 	-------------  Calc PC Address when branching --------------------
-	PCBranch_addr <= PC_plus_4_shifted +  Sign_extend_sig(7 DOWNTO 0);
-	JumpAddr	  <= Sign_extend_sig(7 DOWNTO 0) WHEN Opcode(1 DOWNTO 0) = "10" OR Opcode(1 DOWNTO 0) = "11" ELSE
-					 read_data_1_sig(7 DOWNTO 0); -- jr
+	PCBranch_addr <= PC_plus_4_shifted +  Sign_extend_sig(G_ADDRWIDTH-1 DOWNTO 0);
+	JumpAddr	  <= Sign_extend_sig(G_ADDRWIDTH-1 DOWNTO 0) WHEN Opcode(1 DOWNTO 0) = "10" OR Opcode(1 DOWNTO 0) = "11" ELSE
+					 read_data_1_sig(G_ADDRWIDTH-1 DOWNTO 0); -- jr
 	-------------- Sign Extend 16-bits to 32-bits ----------------------
     Sign_extend_sig <= 	X"0000" & imm_value_w WHEN imm_value_w(15) = '0' ELSE
 						X"FFFF" & imm_value_w;
 	sign_extend_o 	<=	Sign_extend_sig;
 	
 	-------------  JAL Write Data Mux ---------------------- Added NEW 14:15
-	write_reg_data_w 	<= "000000000000000000000000" & PC_plus_4_shifted WHEN Jal = '1' ELSE write_data_i;	--JAL needs to be figures out	
+	write_reg_data_w 	<= "000000000000000000000000" & PC_plus_4_shifted WHEN Jal = '1' ELSE
+						   dtcm_data_rd_i WHEN MemtoReg_ctrl_i = '1' ELSE
+						   alu_result_i WHEN MemtoReg_ctrl_i = '0' ELSE
+						   write_data_i;
 	write_reg_addr_w <= "11111" WHEN Jal = '1' ELSE write_register_address;
 
 	----------- Register File Process ---------------				

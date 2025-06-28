@@ -51,20 +51,20 @@ package aux_package is
 			WORD_GRANULARITY : boolean  := G_WORD_GRANULARITY;
 			DATA_BUS_WIDTH   : integer  := 32;
 			PC_WIDTH         : integer  := 10;
-			NEXT_PC_WIDTH    : integer  := 8;
+			NEXT_PC_WIDTH    : integer  := G_ADDRWIDTH;
 			ITCM_ADDR_WIDTH  : integer  := G_ADDRWIDTH;
 			WORDS_NUM        : integer  := G_DATA_WORDS_NUM;
 			INST_CNT_WIDTH   : integer  := 16
 		);
 		port(
 			clk_i, rst_i       : in  std_logic;
-			add_result_i       : in  std_logic_vector(7 downto 0);
+			add_result_i       : in  std_logic_vector(G_ADDRWIDTH-1 downto 0);
 			instruction_o      : out std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
 			pc_plus_4_o        : out std_logic_vector(PC_WIDTH-1 downto 0);
 			inst_cnt_o         : out std_logic_vector(INST_CNT_WIDTH-1 downto 0);
 			PCSrc              : in  std_logic_vector(1 downto 0);
 			pc_o               : out std_logic_vector(PC_WIDTH-1 downto 0);
-			JumpAddr           : in  std_logic_vector(7 downto 0);
+			JumpAddr           : in  std_logic_vector(G_ADDRWIDTH-1 downto 0);
 			ena, Stall_IF,
 			BPADD_ena          : in  std_logic
 		);
@@ -81,7 +81,7 @@ package aux_package is
 			alu_result_i                   : in  std_logic_vector(DATA_BUS_WIDTH-1 downto 0);
 			RegWrite_ctrl_i                : in  std_logic;
 			MemtoReg_ctrl_i                : in  std_logic;
-			PC_plus_4_shifted              : in  std_logic_vector(7 downto 0);
+			PC_plus_4_shifted              : in  std_logic_vector(G_ADDRWIDTH-1 downto 0);
 			ForwardA_ID, ForwardB_ID       : in  std_logic;
 			BranchBeq, BranchBne, Jump, JAL: in  std_logic;
 			Stall_ID                       : in  std_logic;
@@ -95,8 +95,8 @@ package aux_package is
 			rd_register_o                  : out std_logic_vector(4 downto 0);
 			sign_extend_o                  : out std_logic_vector(31 downto 0);
 			PCSrc                          : out std_logic_vector(1 downto 0);
-			JumpAddr                       : out std_logic_vector(7 downto 0);
-			PCBranch_addr                  : out std_logic_vector(7 downto 0)
+			JumpAddr                       : out std_logic_vector(G_ADDRWIDTH-1 downto 0);
+			PCBranch_addr                  : out std_logic_vector(G_ADDRWIDTH-1 downto 0)
 		);
 	end component;
 
@@ -155,8 +155,8 @@ package aux_package is
 	component dmemory is
 		generic (
 			DATA_BUS_WIDTH  : integer := 32;
-			DTCM_ADDR_WIDTH : integer := 8;
-			WORDS_NUM       : integer := 256
+			DTCM_ADDR_WIDTH : integer := G_ADDRWIDTH;
+			WORDS_NUM       : integer := G_DATA_WORDS_NUM
 		);
 		port (
 			clk_i           : in  std_logic;

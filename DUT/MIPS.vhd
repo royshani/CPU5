@@ -41,7 +41,6 @@ END 	MIPS;
 ------------ ARCHITECTURE ----------------
 ARCHITECTURE structure OF MIPS IS
 	---- FPGA OR ModelSim Signals ----
-	SIGNAL dMemAddr 		: STD_LOGIC_VECTOR(PC_WIDTH-1 DOWNTO 0);
 	SIGNAL resetSim, enaSim	: STD_LOGIC;
 
 	-- declare signals used to connect VHDL components
@@ -108,8 +107,8 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL read_data_1_ID, read_data_2_ID 		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Sign_extend_ID				 		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_0_ID, Wr_reg_addr_1_ID	 				: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-	SIGNAL PCBranch_addr_ID										: STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL JumpAddr_ID											: STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL PCBranch_addr_ID										: STD_LOGIC_VECTOR(G_ADDRWIDTH-1 DOWNTO 0);
+	SIGNAL JumpAddr_ID											: STD_LOGIC_VECTOR(G_ADDRWIDTH-1 DOWNTO 0);
 	
 																
 	-- Execute                                                  
@@ -198,7 +197,7 @@ BEGIN
 				rt_register_o   => Wr_reg_addr_1_ID,
 				write_register_address   => Wr_reg_addr_WB,
         		instruction_i   => IR_ID,
-				PC_plus_4_shifted => PC_plus_4_ID(9 DOWNTO 2),
+				PC_plus_4_shifted => PC_plus_4_ID(G_ADDRWIDTH-1 DOWNTO 0),
 				RegWrite_ctrl_i     => RegWrite_WB,
 				ForwardA_ID     => ForwardA_ID,
 				ForwardB_ID     => ForwardB_ID,
@@ -215,9 +214,9 @@ BEGIN
 				PCBranch_addr   => PCBranch_addr_ID,
         		clk_i           => MCLK_w,  
 				rst_i           => rst_i,
-				dtcm_data_rd_i  => (others => '0'),
-				alu_result_i    => (others => '0'),
-				MemtoReg_ctrl_i => '0'
+				dtcm_data_rd_i  => read_data_MEM,
+				alu_result_i    => ALU_Result_MEM,
+				MemtoReg_ctrl_i => MemtoReg_MEM
 	);
 	
 			
@@ -295,7 +294,7 @@ BEGIN
 	MEM:  dmemory
 	--GENERIC MAP(MemWidth => MemWidth) 
 	PORT MAP (	dtcm_data_rd_o	=> read_data_MEM,
-				dtcm_addr_i		=> dMemAddr,  --jump memory address by 4
+				dtcm_addr_i		=> ALU_Result_MEM(DTCM_ADDR_WIDTH-1 DOWNTO 0),  -- Use global variable for address width
 				dtcm_data_wr_i	=> write_data_MEM, 
 				MemRead_ctrl_i	=> MemRead_MEM, 
 				MemWrite_ctrl_i	=> MemWrite_MEM, 
@@ -440,7 +439,7 @@ BEGIN
 			read_data_WB	<= read_data_MEM;
 			ALU_Result_WB	<= ALU_Result_MEM;
 			Wr_reg_addr_WB	<= Wr_reg_addr_MEM;
-			write_data_mux_WB <= PC_plus_4_WB & "00" WHEN Jal_WB = '1' ELSE
+			write_data_mux_WB <= ("00000000000000000000" & PC_plus_4_WB & "00") WHEN Jal_WB = '1' ELSE
                      read_data_WB         WHEN MemtoReg_WB = '1' ELSE
                      ALU_Result_WB;
 

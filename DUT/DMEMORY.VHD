@@ -5,12 +5,13 @@ USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_SIGNED.ALL;
 LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
+USE work.cond_comilation_package.all;
 ---------------- ENTITY --------------
 ENTITY dmemory IS
 	generic(
 		DATA_BUS_WIDTH : integer := 32;
-		DTCM_ADDR_WIDTH : integer := 8;
-		WORDS_NUM : integer := 256
+		DTCM_ADDR_WIDTH : integer := G_ADDRWIDTH;
+		WORDS_NUM : integer := G_DATA_WORDS_NUM
 	);
 	PORT(	clk_i,rst_i			: IN 	STD_LOGIC;
 	        dtcm_addr_i			: IN 	STD_LOGIC_VECTOR( DTCM_ADDR_WIDTH-1 DOWNTO 0 );
@@ -33,7 +34,7 @@ BEGIN
 		lpm_hint => "ENABLE_RUNTIME_MOD = YES, INSTANCE_NAME = DTCM",
 		lpm_type => "altsyncram",
 		outdata_reg_a => "UNREGISTERED",
-		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\VHDL\CODE\dmemory.hex",
+		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\CPU5\CODE\DTCM.hex",
 		intended_device_family => "Cyclone"
 	)
 	PORT MAP (
